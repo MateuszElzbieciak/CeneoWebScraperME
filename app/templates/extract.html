@@ -1,4 +1,13 @@
-{% extends 'base.html' %}
+{%  extends 'base.html' %}
+
 {% block content %}
-            <p>To jest strona ekstrakcji</p>
+    <h2>Ekstrakcja opinii</h2>
+    <form action="" method="post">
+        <div class="col-auto">
+          <label for="product_id" class="col-form-label">Podaj kod produktu</label>
+          <input type="text" class="form-control" name="product_id" id="product_id" aria-describedby="idHelpInline" placeholder="Podaj kod prodktu">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        
+      </form>
 {% endblock %}
