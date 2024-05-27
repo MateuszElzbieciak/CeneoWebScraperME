@@ -6,18 +6,19 @@ from . import utils
 import json
 import os
 
+
 @app.route('/')
 @app.route('/index')
 def index():
     return render_template("index.html")
 
-@app.route('/extract', methods=['POST', 'GET'])
+@app.route('/extract', methods = ['POST', 'GET'])
 def extract():
-    if request.method=='POST':
-        product_id = request.form.get('product_id')
-        url = f"https://www.ceneo.pl/{product_id}"  
+    if request.method == "POST":
+        product_id = request.form.get("product_id")
+        url = f"https://www.ceneo.pl/{product_id}"
         response = requests.get(url)
-        if response.status_code == requests.codes['ok']:
+        if response.status_code == requests.codes["ok"]:
             page_dom = BeautifulSoup(response.text, "html.parser")
             opinions_count = utils.extract(page_dom, "a.product-review__link > span")
             if opinions_count:
@@ -33,18 +34,22 @@ def extract():
                         }
                         all_opinions.append(single_opinion)
                     try:
-                        url = "https://www.ceneo.pl"+page_dom.select_one("a.pagination__next")["href"].strip()
+                        url = "https://www.ceneo.pl" + page_dom.select_one("a.pagination__next")["href"].strip()
                     except TypeError: 
                         url = None
-
-                return redirect(url_for('product', product_id=product_id))
-            return render_template("extract.html", error="Podany produkt nie ma żadnych opinii")
-        return render_template("extract.html", error="Produkt o podanym kodzie nie istnieje")    
+                    if not os.path.exists("app/opinions"):
+                        os.makedirs("app/opinions")
+                    with open(f"app/opinions/{product_id}.json", "w", encoding="UTF-8") as jf:
+                        json.dump(all_opinions, jf, indent = 4, ensure_ascii = False)
+                return redirect(url_for("product", product_id = product_id))
+            return render_template("extract.html", error = "Podany produkt nie ma żadnych opinii")
+        return render_template("extract.html", error = "Pordukt o podanym kodzie nie istnieje")
     return render_template("extract.html")
 
 @app.route('/products')
 def products():
-    return render_template("products.html")
+    products = [filename.split(".")[0] for filename in os.listdir("app/opinions")]
+    return render_template("products.html", products=products)
 
 @app.route('/about')
 def about():
@@ -53,8 +58,3 @@ def about():
 @app.route('/product/<product_id>')
 def product(product_id):
     return render_template("product.html", product_id=product_id)
-
-if not os.path.exists("app/opinions"):
-    os.makedirs("app/opinions")
-with open(f"app/opinions/{product_id}.json", "w", encoding="UTF-8") as jf:
-    json.dump(all_opinions, jf, indent=4, ensure_ascii=False)
